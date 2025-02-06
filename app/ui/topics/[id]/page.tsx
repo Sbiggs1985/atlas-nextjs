@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { HashtagIcon } from "@heroicons/react/24/outline";
+import { askQuestion, upvoteQuestion } from "@/app/actions";
 
 interface TopicPageProps {
   params: { id: string };
@@ -17,8 +18,9 @@ export default function TopicPage({ params }: TopicPageProps) {
     async function fetchData() {
       setLoading(true);
       try {
-        const topicRes = await fetch(`/api/topics/${params.id}`);
-        const questionsRes = await fetch(`/api/questions?topicId=${params.id}`);
+        // ✅ Fetch topic and questions using Server Actions
+        const topicRes = await fetch(`/ui/topics/${params.id}`);
+        const questionsRes = await fetch(`/ui/topics/${params.id}/questions`);
 
         if (topicRes.ok && questionsRes.ok) {
           setTopic(await topicRes.json());
@@ -39,28 +41,29 @@ export default function TopicPage({ params }: TopicPageProps) {
     e.preventDefault();
     if (!questionText.trim()) return;
 
-    const res = await fetch(`/api/questions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topicId: params.id, title: questionText }),
-    });
+    const formData = new FormData();
+    formData.append("topicId", params.id);
+    formData.append("title", questionText);
 
-    if (res.ok) {
+    const res = await askQuestion(formData); // ✅ Call Server Action
+
+    if (res.success) {
       setQuestionText("");
-      const newQuestion = await res.json();
-      setQuestions([...questions, newQuestion]); // Update UI dynamically
+      setQuestions([...questions, res.data]); // ✅ Update UI dynamically
     } else {
       console.error("❌ Failed to add question.");
     }
   }
 
   async function handleVote(questionId: string) {
-    const res = await fetch(`/api/questions/${questionId}/vote`, { method: "POST" });
+    const formData = new FormData();
+    formData.append("questionId", questionId);
 
-    if (res.ok) {
-      const updatedQuestion = await res.json();
+    const res = await upvoteQuestion(formData); // ✅ Call Server Action
+
+    if (res.success) {
       setQuestions(
-        questions.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q))
+        questions.map((q) => (q.id === res.data.id ? res.data : q))
       );
     } else {
       console.error("❌ Failed to upvote.");

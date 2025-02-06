@@ -1,30 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { addTopic } from "@/app/actions"; // ✅ Import Server Action
 
 export default function NewTopicPage() {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    
+
     setLoading(true);
-    
-    const res = await fetch("/api/topics", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("title", title);
+
+    const res = await addTopic(formData); // ✅ Direct call to Server Action
 
     setLoading(false);
 
-    if (res.ok) {
-      setTitle(""); // Clear input after successful submission
+    if (res.success) {
+      setTitle(""); // Clear input after success
       window.location.href = "/ui"; // Redirect to topics list
     } else {
-      console.error("❌ Failed to create topic.");
+      setError(res.error || "❌ Failed to create topic.");
     }
   }
 
@@ -38,6 +40,7 @@ export default function NewTopicPage() {
           onChange={(e) => setTitle(e.target.value)}
           className="border p-2 w-full"
           placeholder="Enter topic title"
+          required
         />
         <button
           type="submit"
@@ -47,6 +50,9 @@ export default function NewTopicPage() {
           {loading ? "Creating..." : "Create Topic"}
         </button>
       </form>
+
+      {/* ✅ Show Error Messages */}
+      {error && <p className="text-red-600 mt-2">{error}</p>}
     </main>
   );
 }
