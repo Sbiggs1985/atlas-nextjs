@@ -1,3 +1,5 @@
+"use client";
+
 import { sql } from "@vercel/postgres";
 import { Question, Topic, User } from "./definitions";
 
