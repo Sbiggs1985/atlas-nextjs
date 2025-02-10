@@ -12,7 +12,7 @@ export const authOptions = {
       async authorize(credentials) {
         const { email, password } = credentials as { email: string; password: string };
 
-        // ✅ Hardcoded user for grading
+        // ✅ Hardcoded user for grading purposes
         if (email === "user@atlasmail.com" && password === "123456") {
           return { id: "1", name: "Atlas User", email };
         }
@@ -24,11 +24,30 @@ export const authOptions = {
   pages: {
     signIn: "/login", // ✅ Redirects users to the login page
   },
-  secret: process.env.NEXTAUTH_SECRET, // ✅ Must be set in .env.local
+  callbacks: {
+    async session({ session, token }) {
+      if (token) {
+        session.user = {
+          id: token.sub,
+          email: token.email,
+        };
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        token.email = user.email;
+      }
+      return token;
+    },
+  },
+  secret: process.env.NEXTAUTH_SECRET, // ✅ Set a secure secret in .env.local
   session: {
-    strategy: "jwt", // ✅ Uses JWT for session storage
+    strategy: "jwt", // ✅ Use JSON Web Token (JWT) for sessions
   },
 };
 
+// ✅ Create API route handlers
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

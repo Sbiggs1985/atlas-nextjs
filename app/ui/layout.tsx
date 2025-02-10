@@ -1,8 +1,29 @@
+"use client";
+
 import Link from "next/link";
 import { fetchTopics } from "@/lib/data";
+import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default async function UILayout({ children }: { children: React.ReactNode }) {
-  const topics = await fetchTopics();
+export default function UILayout({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
+  const [topics, setTopics] = useState<any[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login"); // ✅ Redirect if not logged in
+    }
+
+    async function loadTopics() {
+      const data = await fetchTopics();
+      setTopics(data);
+    }
+    loadTopics();
+  }, [status]);
+
+  if (status === "loading") return <div className="p-6">Loading...</div>;
 
   return (
     <div className="flex min-h-screen">
@@ -39,6 +60,16 @@ export default async function UILayout({ children }: { children: React.ReactNode
             <li className="text-gray-500">No topics available.</li>
           )}
         </ul>
+
+        {/* Sign Out Button */}
+        {session && (
+          <button
+            className="mt-6 bg-red-600 text-white p-2 rounded w-full"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+          >
+            Sign Out
+          </button>
+        )}
       </aside>
 
       {/* Main Content */}
@@ -46,5 +77,3 @@ export default async function UILayout({ children }: { children: React.ReactNode
     </div>
   );
 }
-
-  

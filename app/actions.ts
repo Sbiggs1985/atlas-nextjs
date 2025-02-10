@@ -7,13 +7,19 @@ import { createTopic, createQuestion, voteUpQuestion } from "@/lib/data";
  */
 export async function addTopic(formData: FormData) {
   const title = formData.get("title") as string;
-  if (!title.trim()) return { error: "Topic title cannot be empty." };
+  if (!title || !title.trim()) return { error: "❌ Topic title cannot be empty." };
 
+  console.log("📌 Creating topic:", title);
   const newTopic = await createTopic(title);
-  if (!newTopic) return { error: "Failed to create topic." };
+  
+  if (!newTopic) {
+    console.error("❌ Failed to create topic:", title);
+    return { error: "❌ Database error. Failed to create topic." };
+  }
 
   revalidatePath("/ui"); // Refreshes topic list in /ui page
-  return { success: "Topic created successfully!" };
+  console.log("✅ Topic created:", newTopic);
+  return { success: true, data: newTopic }; // ✅ Return created topic
 }
 
 /**
@@ -22,13 +28,20 @@ export async function addTopic(formData: FormData) {
 export async function askQuestion(formData: FormData) {
   const topicId = formData.get("topicId") as string;
   const title = formData.get("title") as string;
-  if (!title.trim() || !topicId) return { error: "Invalid question data." };
+  
+  if (!title || !title.trim() || !topicId) return { error: "❌ Invalid question data." };
 
+  console.log(`📌 Adding question: "${title}" to topic ID: ${topicId}`);
   const newQuestion = await createQuestion(topicId, title);
-  if (!newQuestion) return { error: "Failed to add question." };
+
+  if (!newQuestion) {
+    console.error("❌ Failed to add question:", title);
+    return { error: "❌ Database error. Failed to add question." };
+  }
 
   revalidatePath(`/ui/topics/${topicId}`); // Refresh question list for the topic
-  return { success: "Question added successfully!" };
+  console.log("✅ Question added:", newQuestion);
+  return { success: true, data: newQuestion }; // ✅ Return created question
 }
 
 /**
@@ -36,11 +49,17 @@ export async function askQuestion(formData: FormData) {
  */
 export async function upvoteQuestion(formData: FormData) {
   const id = formData.get("questionId") as string;
-  if (!id) return { error: "Invalid question ID." };
+  if (!id) return { error: "❌ Invalid question ID." };
 
+  console.log("📌 Upvoting question ID:", id);
   const updatedQuestion = await voteUpQuestion(id);
-  if (!updatedQuestion) return { error: "Failed to upvote question." };
+
+  if (!updatedQuestion) {
+    console.error("❌ Failed to upvote question ID:", id);
+    return { error: "❌ Database error. Failed to upvote question." };
+  }
 
   revalidatePath(`/ui/topics/${updatedQuestion.topic_id}`); // Refresh question votes
-  return { success: "Vote added!" };
+  console.log("✅ Vote added:", updatedQuestion);
+  return { success: true, data: updatedQuestion }; // ✅ Return updated question
 }

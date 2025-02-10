@@ -18,18 +18,17 @@ export default function TopicPage({ params }: TopicPageProps) {
     async function fetchData() {
       setLoading(true);
       try {
-        // ✅ Fetch topic and questions using Server Actions
-        const topicRes = await fetch(`/ui/topics/${params.id}`);
-        const questionsRes = await fetch(`/ui/topics/${params.id}/questions`);
+        const topicRes = await fetch(`/api/topics/${params.id}`);
+        const questionsRes = await fetch(`/api/questions?topicId=${params.id}`);
 
         if (topicRes.ok && questionsRes.ok) {
           setTopic(await topicRes.json());
           setQuestions(await questionsRes.json());
         } else {
-          console.error("Error fetching topic or questions.");
+          console.error("❌ Error fetching topic or questions.");
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("❌ Error fetching data:", error);
       }
       setLoading(false);
     }
@@ -45,11 +44,11 @@ export default function TopicPage({ params }: TopicPageProps) {
     formData.append("topicId", params.id);
     formData.append("title", questionText);
 
-    const res = await askQuestion(formData); // ✅ Call Server Action
+    const res = await askQuestion(formData);
 
     if (res.success) {
       setQuestionText("");
-      setQuestions([...questions, res.data]); // ✅ Update UI dynamically
+      setQuestions([...questions, res.data]); // ✅ Update UI
     } else {
       console.error("❌ Failed to add question.");
     }
@@ -59,7 +58,7 @@ export default function TopicPage({ params }: TopicPageProps) {
     const formData = new FormData();
     formData.append("questionId", questionId);
 
-    const res = await upvoteQuestion(formData); // ✅ Call Server Action
+    const res = await upvoteQuestion(formData);
 
     if (res.success) {
       setQuestions(
